@@ -6,7 +6,7 @@ import sys
 import os
 import tempfile
 
-class ClangServer(SocketServer.ThreadingTCPServer):
+class ClangServer(SocketServer.TCPServer):
   allow_reuse_adress = True
 
 class ClangRequestHandler(SocketServer.BaseRequestHandler):
