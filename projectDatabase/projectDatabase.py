@@ -1,4 +1,4 @@
-import os, fnmatch
+import os
 import clang.cindex as cindex
 import cPickle as pickle
 import hashlib
@@ -156,21 +156,29 @@ class IncludedFile():
 
 class ProjectDatabase:
   ''' Database for all files of a project.'''
-  def __init__(self, root, args):
+  def __init__(self, root, compDb):
     # files in the project and the corresponing FileInfo
     self.fileInfos = dict()
     # file that are included from somewhere
     self.includedFiles = dict()
     # USRs in this project and the corresponding UsrInfo
     self.usrInfos = dict()
-    self.args = args
+    self.compilationDatabase = compDb
     self.root = root
 
   @staticmethod
-  def loadProject(dictPath):
-    f = open(dictPath,"r")
+  def createProject(rootPath,db):
+    res = ProjectDatabase(rootPath,db)
+    res.updateOutdatedFiles([])
+    return res
+
+  @staticmethod
+  def loadProject(rootPath,db):
+    f = open(os.path.join(rootPath,".clang_complete.project.dict"),"r")
     res = pickle.load(f)
     f.close()
+    res.compilationDatabase = db
+    res.updateOutdatedFiles([])
     if isinstance(res,ProjectDatabase):
       return res
     else:
@@ -195,11 +203,11 @@ class ProjectDatabase:
     print "Parsing",fileName
     
     # create libclang compatible data structure
-    transUnit = cindex.TranslationUnit.from_source(fileName, args = self.args, unsaved_files = unsavedFiles)
+    transUnit = cindex.TranslationUnit.from_source(fileName, args = self.compilationDatabase.getCompileCommands(fileName), unsaved_files = unsavedFiles)
 
     cursor = transUnit.cursor
     # remember file
-    self.fileInfos[fileName] = FileInfo(fileName, self.args)
+    self.fileInfos[fileName] = FileInfo(fileName, self.compilationDatabase.getCompileCommands(fileName))
     fileInfo = self.fileInfos[fileName]
     fileInfo.parseDiagnostics(transUnit.diagnostics)
     # build database with file
@@ -266,13 +274,17 @@ class ProjectDatabase:
         includedFile.md5 = md5
         continue
 
+    for f in self.fileInfos.iteritems():
+      if f.args != self.compilationDatabase.getCompileCommands(f.name):
+        outdatedFiles.add(f.name)
+
     for f in outdatedFiles:
       if os.path.exists(f):
         self.updateOrAddFile(f, unsavedFiles)
       else:
         self.removeFile(f)
 
-    for f in find_cpp_files(self.root):
+    for f in self.compilationDatabase.getAllFiles():
       if not self.fileInfos.has_key(f):
         self.addFile(f,unsavedFiles)
 

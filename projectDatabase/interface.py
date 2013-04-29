@@ -1,27 +1,29 @@
+import clangCompilationDatabase
 from projectDatabase import *
 
 def updateProject(projectPath, unsavedFiles):
   loadedProjects[projectPath].updateOutdatedFiles(unsavedFiles)
 
-def searchUpwardForFile(startPath, fileName):
-  '''Return the first encounter of the searched file, upward from the current direcotry'''
+def searchUpwardForFiles(startPath, fileNames):
+  '''Return the first encounter of one of the searched files, upward from the current direcotry'''
   startDir = os.path.abspath(os.path.dirname(startPath))
 
   curDir  = startDir
   lastDir = ""
   while curDir != lastDir:
     lastDir = curDir
-    if os.path.exists(os.path.join(curDir, fileName)):
-      return curDir #found the file, this is the projects root
-    else:
-      curDir = os.path.abspath(os.path.join(curDir,os.path.pardir))
+    for f in fileNames:
+      if os.path.exists(os.path.join(curDir, f)):
+        return curDir #found the file, this is the projects root
+      else:
+        curDir = os.path.abspath(os.path.join(curDir,os.path.pardir))
 
   # Nothing found
   return None
 
 def filesProjectRoot(filePath):
   '''Return the root directory for a files project by searching for .clang_complete'''
-  return searchUpwardForFile(filePath, ".clang_complete.project.dict")
+  return searchUpwardForFiles(filePath, [".clang_complete","compilation_commands.json"])
 
 # global dictonary of all loaded projects
 loadedProjects = dict()
@@ -55,9 +57,6 @@ def getProjectFromRoot(root):
     return loadedProjects[root]
   return None
 
-def getFilesProjRoot(filePath):
-  return filesProjectRoot(filePath)
-
 def getFilesProject(filePath):
   projectRoot = filesProjectRoot(filePath)
   if projectRoot is not None:
@@ -65,25 +64,31 @@ def getFilesProject(filePath):
       return loadedProjects[projectRoot]
   return None
 
-def getOrLoadFilesProject(filePath):
+def getLoadOrCreateFilesProject(filePath):
   ''' Returns the project for a file if loaded.
       If not loaded, load it and return it.'''
   projectRoot = filesProjectRoot(filePath)
   if projectRoot is None:
+    print "Not loading any project, because no root was found"
     return None
-  joinedPath = os.path.join(projectRoot,".clang_complete")
-  if os.path.exists(joinedPath):
-    f = open(joinedPath,"r")
-    args = f.readlines()
-    f.close()
+  joinedPath1 = os.path.join(projectRoot,"compilation_commands.json")
+  joinedPath2 = os.path.join(projectRoot,".clang_complete")
+  db = None
+  if os.path.exists(joinedPath1):
+    db = cindex.CompilationDatabase(joinedPath1)
   else:
-    args = []
+    if os.path.exists(joinedPath2):
+      db = clangCompilationDatabase.ClangCompilationDatabase(projectRoot)
 
-  if projectRoot is not None:
+  if (projectRoot is not None) and (db is not None):
     if not loadedProjects.has_key(projectRoot):
-      print "Loading clang project dictonary at " + projectRoot
-      loadedProjects[projectRoot] = ProjectDatabase.loadProject(os.path.join(projectRoot, ".clang_complete.project.dict"))
-      loadedProjects[projectRoot].args = args
+      dictPath = os.path.join(projectRoot,".clang_complete_project.dict")
+      if os.path.exists(dictPath):
+        print "Loading clang project dictonary at " + projectRoot
+        loadedProjects[projectRoot] = ProjectDatabase.loadProject(projectRoot,db)
+      else:
+        print "Creating clang project dictonary at " + projectRoot
+        loadedProjects[projectRoot] = ProjectDatabase.createProject(projectRoot,db)
     return loadedProjects[projectRoot]
   return None
 
@@ -100,25 +105,6 @@ def onUnloadFile(filePath):
     proj.saveProject(os.path.join(proj.root, ".clang_complete.project.dict"));
     del loadedProjects[proj.root]
 
-def createOrUpdateProjectForFile(path,args, unsavedFiles):
-  '''Create a project for the file, by searching for .clang_complete
-     and creating the project there'''
-  projectPath = searchUpwardForFile(path,".clang_complete")
-  if projectPath is None:
-    print "Cannot create project because I cannot find .clang_complete"
-    return None
-  proj = getOrLoadFilesProject(path)
-  if proj is None:
-    proj = ProjectDatabase(projectPath,args)
-    for f in find_cpp_files(projectPath):
-      proj.addFile(f,unsavedFiles)
-    loadedProjects[projectPath] = proj
-  else:
-    proj.args = args
-    proj.updateOutdatedFiles(unsavedFiles)
-  proj.saveProject(os.path.join(projectPath, ".clang_complete.project.dict"))
-  return projectPath
-
 def getFilesProjectSymbolNames(filePath,args):
   filePath = os.path.normpath(filePath)
   proj = getOrLoadFilesProject(filePath)
@@ -134,21 +120,7 @@ def getFilesProjectDerivedClassesSymbolNamesForBaseUsr(filePath, args, baseUsr):
   else:
     return proj.getDerivedClassesTypeNames(baseUsr)
 
-def find_files(directory, patterns):
-  ''' Supporting function to iterate over all files
-  recusivly in a directory which follow a specific pattern.'''
-  for root, dirs, files in os.walk(directory):
-    for basename in files:
-      for pattern in patterns:
-        if fnmatch.fnmatch(basename, pattern):
-          filename = os.path.join(root, basename)
-          yield filename
 
-def find_cpp_files(path = "."):
-  '''Iterate over all files which are cpp file'''
-  return find_files(path,map (lambda ex: "*" + ex, cppExtensions))
-
-cppExtensions = [".cpp",".cc"]
 
 conf = cindex.Config()
 
