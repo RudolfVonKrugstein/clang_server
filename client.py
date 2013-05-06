@@ -11,6 +11,7 @@ def doRequest(data):
   print "waiting for result ..."
   result = json.loads(s.recv(1024))
   print result
+  s.shutdown(1)
   s.close()
 
 def getAllSymbols():
