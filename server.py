@@ -89,5 +89,9 @@ class ClangRequestHandler(SocketServer.BaseRequestHandler):
         
 
 # the main
-server = ClangServer(("127.0.0.1", 19375), ClangRequestHandler)
-server.serve_forever()
+def runServer():
+  server = ClangServer(("127.0.0.1", 19375), ClangRequestHandler)
+  server.serve_forever()
+
+if __name__ == "__main__":
+  runServer()

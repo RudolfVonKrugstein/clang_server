@@ -25,8 +25,9 @@ def loadFile():
 def listLoadedProjects():
   doRequest({'kind':'listLoadedProjects'})
 
-m = menu.Menu()
-m.addItem("Load file",loadFile)
-m.addItem("Dump all symbols",getAllSymbols)
-m.addItem("List loaded projects",listLoadedProjects)
-m.run()
+if __name__ == "__main__":
+  m = menu.Menu()
+  m.addItem("Load file",loadFile)
+  m.addItem("Dump all symbols",getAllSymbols)
+  m.addItem("List loaded projects",listLoadedProjects)
+  m.run()
