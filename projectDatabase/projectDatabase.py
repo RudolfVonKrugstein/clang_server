@@ -170,6 +170,7 @@ class ProjectDatabase:
   def createProject(rootPath,db):
     res = ProjectDatabase(rootPath,db)
     res.updateOutdatedFiles([])
+    res.saveProject()
     return res
 
   @staticmethod
@@ -190,7 +191,8 @@ class ProjectDatabase:
       res = res.union(f.diagnostics)
     return res
 
-  def saveProject(self,dictPath):
+  def saveProject(self):
+    dictPath = os.path.join(self.root,".clang_complete.project.dict")
     f = open(dictPath,"w")
     pickle.dump(self,f,protocol=2)
     f.close()
