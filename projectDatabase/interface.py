@@ -105,6 +105,19 @@ def getLoadOrCreateFilesProject(filePath):
   if projectRoot is None:
     print "Not loading any project, because no root was found"
     return None
+  joinedPath1 = os.path.join(projectRoot,"compilation_commands.json")
+  joinedPath2 = os.path.join(projectRoot,".clang_complete")
+  db = None
+  if os.path.exists(joinedPath1):
+    db = cindex.CompilationDatabase(joinedPath1)
+  else:
+    if os.path.exists(joinedPath2):
+      db = clangCompilationDatabase.ClangCompilationDatabase(projectRoot)
+
+  if db is None:
+    print "Not loading any project, because not compilation database found"
+    return None
+
   res = getOrLoadFilesProject(filePath)
   if res is None:
     print "Creating clang project dictonary at " + projectRoot
