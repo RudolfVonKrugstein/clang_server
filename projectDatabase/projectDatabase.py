@@ -419,6 +419,8 @@ class ProjectDatabase:
     if not self.usrInfos.has_key(usr):
       print "Usr not found:",usr
       return []
+    if locType == 'rename':
+      return self.getUsrRenameLocations(usr)
     return self.usrInfos[usr].getLocations(locType)
 
   def getUsrSpelling(self,usr):
