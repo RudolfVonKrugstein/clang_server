@@ -28,7 +28,7 @@ class ClangRequestHandler(SocketServer.BaseRequestHandler):
     def handle_loadfile(self,data):
       '''Load the project for the file and return the files project root'''
       unsavedFiles = self.aquireUnsavedFiles(data['unsavedFiles'])
-      projRoot = projectDatabase.getFilesProjRoot(data['filename'])
+      projRoot = projectDatabase.filesProjectRoot(data['filename'])
       self.request.sendall(json.dumps({'kind':'result', 'projRoot':projRoot}))
       if projRoot is None:
         return
@@ -66,6 +66,9 @@ class ClangRequestHandler(SocketServer.BaseRequestHandler):
       else:
         print len(json.dumps( {'kind':'result','locations':proj.getDefinitionsAndDeclarations(data['usr'])}))
         self.request.sendall(json.dumps( {'kind':'result','locations':proj.getDefinitionsAndDeclarations(data['usr'])}))
+
+    def handle_listLoadedProjects(self,data):
+      self.request.sendall(json.dumps({'kind':'result','projectRoots':projectDatabase.getAllProjects()}))
 
     def handle(self):
       ''' The main handle function, handles all client requests'''

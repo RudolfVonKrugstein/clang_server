@@ -22,7 +22,11 @@ def loadFile():
   name = raw_input("file name> ")
   doRequest({'kind':'loadfile','filename':name,'unsavedFiles':{}})
 
+def listLoadedProjects():
+  doRequest({'kind':'listLoadedProjects'})
+
 m = menu.Menu()
 m.addItem("Load file",loadFile)
 m.addItem("Dump all symbols",getAllSymbols)
+m.addItem("List loaded projects",listLoadedProjects)
 m.run()
