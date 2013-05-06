@@ -42,6 +42,24 @@ class TestBasics:
   def testListProjects(self):
     # load the file, so that the project may be there
     self.testLoadFile()
-    res = self.doClientRequest({'kind':'listLoadedProjects'})
+    res = self.doClientRequest({'kind':'listloadedprojects'})
     assert res['kind'] == 'result'
     assert res['projectRoots'] == [os.path.abspath("./projects/test1")]
+
+  def testDumpSymbols(self):
+    # load the file, so that the project may be there
+    self.testLoadFile()
+    projRoot = os.path.abspath("./projects/test1")
+    res = self.doClientRequest({'kind':'dumpsymbols','projRoot':projRoot,'unsavedFiles':{}})
+    assert res['kind'] == 'result'
+    assert os.path.exists(res['symbols'])
+
+  def testGetDeclarationsAndDefintions(self):
+    # load the file, so that the project may be there
+    self.testLoadFile()
+    projRoot = os.path.abspath("./projects/test1")
+    res = self.doClientRequest({'kind':'getdeclarationsanddefinitions','projRoot':projRoot,'usr':'c:@F@main','unsavedFiles':{}})
+    assert res['kind'] == 'result'
+    assert res['locations'] == [[os.path.join(projRoot,"main.cpp"), 1, 5]]
+
+
