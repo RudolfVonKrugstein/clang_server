@@ -56,7 +56,7 @@ class ClangRequestHandler(SocketServer.BaseRequestHandler):
         f.close()
         self.request.sendall(json.dumps({'kind':'result','symbols':name}))
 
-    def handle_getdeclarationsanddefinitions(self,data):
+    def handle_getusrlocations(self,data):
       '''Get all declarations and defintions of a symbol (given by an usr)'''
       projRoot = data['projRoot']
       unsavedFiles = self.aquireUnsavedFiles(data['unsavedFiles'])
@@ -64,7 +64,7 @@ class ClangRequestHandler(SocketServer.BaseRequestHandler):
       if proj is None:
         return projNotFoundData
       else:
-        self.request.sendall(json.dumps( {'kind':'result','locations':proj.getUsrLocations(data['usr'],"declarations_and_definitions")}))
+        self.request.sendall(json.dumps( {'kind':'result','locations':proj.getUsrLocations(data['usr'],data['type'])}))
 
     def handle_listloadedprojects(self,data):
       self.request.sendall(json.dumps({'kind':'result','projectRoots':projectDatabase.getAllProjects()}))

@@ -58,7 +58,7 @@ class TestBasics:
     # load the file, so that the project may be there
     self.testLoadFile()
     projRoot = os.path.abspath("./projects/test1")
-    res = self.doClientRequest({'kind':'getdeclarationsanddefinitions','projRoot':projRoot,'usr':'c:@F@main','unsavedFiles':{}})
+    res = self.doClientRequest({'kind':'getusrlocations','projRoot':projRoot,'usr':'c:@F@main','type':'declarations_and_definitions','unsavedFiles':{}})
     assert res['kind'] == 'result'
     assert res['locations'] == [[os.path.join(projRoot,"main.cpp"), 1, 5]]
 

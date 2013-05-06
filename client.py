@@ -29,7 +29,7 @@ def listLoadedProjects():
 def getDeclarationsAndDefintions():
   root = raw_input("project root> ")
   usr = raw_input("usr> ")
-  doRequest({'kind':'getdeclarationsanddefinitions','projRoot':root,'usr':usr,'unsavedFiles':{}})
+  doRequest({'kind':'getusrlocations','projRoot':root,'usr':usr,'type':'declarations_and_definitions','unsavedFiles':{}})
 
 
 if __name__ == "__main__":
