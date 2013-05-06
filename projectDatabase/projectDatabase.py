@@ -267,16 +267,16 @@ class ProjectDatabase:
         md5 = hashlib.md5(unsavedFilesDict[name]).hexdigest()
       else:
         f = open(name,"r")
-        md5 = haslib.md5(f.read()).hexdigest()
+        md5 = hashlib.md5(f.read()).hexdigest()
         f.close()
 
-      if md5 != includedFile.md5:
+      if md5 != includedFile.hashval:
         outdatedFiles = outdatedFiles.union(includedFile.dependedFiles)
         # we will update, so update md5
         includedFile.md5 = md5
         continue
 
-    for f in self.fileInfos.iteritems():
+    for f in self.fileInfos.itervalues():
       if f.args != self.compilationDatabase.getCompileCommands(f.name):
         outdatedFiles.add(f.name)
 
