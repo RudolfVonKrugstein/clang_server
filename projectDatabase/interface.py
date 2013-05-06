@@ -1,6 +1,9 @@
 import clangCompilationDatabase
 from projectDatabase import *
 
+def getAllProjects():
+  return list(loadedProjects.iterkeys())
+
 def updateProject(projectPath, unsavedFiles):
   loadedProjects[projectPath].updateOutdatedFiles(unsavedFiles)
 
@@ -64,13 +67,17 @@ def getFilesProject(filePath):
       return loadedProjects[projectRoot]
   return None
 
-def getLoadOrCreateFilesProject(filePath):
+def getOrLoadFilesProject(filePath):
   ''' Returns the project for a file if loaded.
-      If not loaded, load it and return it.'''
+      If not loaded, load it, if that fails, return None.'''
   projectRoot = filesProjectRoot(filePath)
   if projectRoot is None:
     print "Not loading any project, because no root was found"
     return None
+
+  if loadedProjects.has_key(projectRoot):
+    return loadedProjects[projectRoot]
+
   joinedPath1 = os.path.join(projectRoot,"compilation_commands.json")
   joinedPath2 = os.path.join(projectRoot,".clang_complete")
   db = None
@@ -80,18 +87,30 @@ def getLoadOrCreateFilesProject(filePath):
     if os.path.exists(joinedPath2):
       db = clangCompilationDatabase.ClangCompilationDatabase(projectRoot)
 
-  if (projectRoot is not None) and (db is not None):
-    if not loadedProjects.has_key(projectRoot):
-      dictPath = os.path.join(projectRoot,".clang_complete_project.dict")
-      if os.path.exists(dictPath):
-        print "Loading clang project dictonary at " + projectRoot
-        loadedProjects[projectRoot] = ProjectDatabase.loadProject(projectRoot,db)
-      else:
-        print "Creating clang project dictonary at " + projectRoot
-        loadedProjects[projectRoot] = ProjectDatabase.createProject(projectRoot,db)
+  if db is None:
+    print "Not loading any project, because not compilation database found"
+    return None
+
+  dictPath = os.path.join(projectRoot,".clang_complete.project.dict")
+  if os.path.exists(dictPath):
+    print "Loading clang project dictonary at " + projectRoot
+    loadedProjects[projectRoot] = ProjectDatabase.loadProject(projectRoot,db)
     return loadedProjects[projectRoot]
   return None
 
+def getLoadOrCreateFilesProject(filePath):
+  ''' Returns the project for a file if loaded.
+      If not loaded, load it and return it.'''
+  projectRoot = filesProjectRoot(filePath)
+  if projectRoot is None:
+    print "Not loading any project, because no root was found"
+    return None
+  res = getOrLoadFilesProject(filePath)
+  if res is None:
+    print "Creating clang project dictonary at " + projectRoot
+    loadedProjects[projectRoot] = ProjectDatabase.createProject(projectRoot,db)
+    res = loadedProjects[projectRoot]
+  return res
 
 def isProjectLoaded(projRoot):
   return loadedProjects.has_key(projRoot)
@@ -107,7 +126,7 @@ def onUnloadFile(filePath):
 
 def getFilesProjectSymbolNames(filePath,args):
   filePath = os.path.normpath(filePath)
-  proj = getOrLoadFilesProject(filePath)
+  proj = getLoadOrFilesProject(filePath)
   if proj is None:
     print "Sorry, no project for file " + filePath + " found"
   else:
