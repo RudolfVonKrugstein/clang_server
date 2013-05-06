@@ -24,7 +24,13 @@ def loadFile():
   doRequest({'kind':'loadfile','filename':name,'unsavedFiles':{}})
 
 def listLoadedProjects():
-  doRequest({'kind':'listLoadedProjects'})
+  doRequest({'kind':'listloadedprojects'})
+
+def getDeclarationsAndDefintions():
+  root = raw_input("project root> ")
+  usr = raw_input("usr> ")
+  doRequest({'kind':'getdeclarationsanddefinitions','projRoot':root,'usr':usr,'unsavedFiles':{}})
+
 
 if __name__ == "__main__":
   m = menu.Menu()

@@ -64,10 +64,9 @@ class ClangRequestHandler(SocketServer.BaseRequestHandler):
       if proj is None:
         return projNotFoundData
       else:
-        print len(json.dumps( {'kind':'result','locations':proj.getDefinitionsAndDeclarations(data['usr'])}))
-        self.request.sendall(json.dumps( {'kind':'result','locations':proj.getDefinitionsAndDeclarations(data['usr'])}))
+        self.request.sendall(json.dumps( {'kind':'result','locations':proj.getUsrLocations(data['usr'],"declarations_and_definitions")}))
 
-    def handle_listLoadedProjects(self,data):
+    def handle_listloadedprojects(self,data):
       self.request.sendall(json.dumps({'kind':'result','projectRoots':projectDatabase.getAllProjects()}))
 
     def handle(self):
